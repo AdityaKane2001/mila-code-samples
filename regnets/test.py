@@ -8,7 +8,7 @@ from datetime import datetime
 
 import tensorflow as tf
 import wandb
-from dacite import from_dict
+
 from dataset import ImageNet
 from utils import *
 from wandb.keras import WandbCallback
@@ -87,8 +87,3 @@ wandb.init(
     config=config_dict,
 )
 train_cfg = wandb.config.train_cfg
-
-
-train_cfg = from_dict(data_class=TrainConfig, data=train_cfg)
-
-print(train_cfg)

@@ -7,7 +7,7 @@ from datetime import datetime
 import pytest
 import tensorflow as tf
 import wandb
-from dacite import from_dict
+
 from dataset import ImageNet
 from utils import *
 from wandb.keras import WandbCallback
