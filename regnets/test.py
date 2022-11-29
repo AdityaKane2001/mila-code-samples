@@ -1,30 +1,33 @@
 """Script for training RegNetY. Supports TPU training."""
 
-import tensorflow as tf
 import argparse
-import os
 import json
-import wandb
 import logging
-# Contrived example of generating a module named as a string
-
+import os
 from datetime import datetime
-from wandb.keras import WandbCallback
+
+import tensorflow as tf
+import wandb
+from dacite import from_dict
 from dataset import ImageNet
 from utils import *
-from dacite import from_dict
+from wandb.keras import WandbCallback
+
+# Contrived example of generating a module named as a string
+
 
 NORMALIZED = False
 
 
 log_location = "gs://ak-us-train"
-train_tfrecs_filepath = tf.io.gfile.glob(
-    "gs://ak-imagenet-new/train/train_*.tfrecord")
-val_tfrecs_filepath = tf.io.gfile.glob(
-    "gs://ak-imagenet-new/valid/valid_*.tfrecord")
+train_tfrecs_filepath = tf.io.gfile.glob("gs://ak-imagenet-new/train/train_*.tfrecord")
+val_tfrecs_filepath = tf.io.gfile.glob("gs://ak-imagenet-new/valid/valid_*.tfrecord")
 
-logging.basicConfig(format="%(asctime)s %(levelname)s : %(message)s",
-                    datefmt="%d-%b-%y %H:%M:%S", level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s : %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+    level=logging.INFO,
+)
 
 cluster_resolver, strategy = connect_to_tpu()
 
@@ -67,24 +70,23 @@ val_prep_cfg = get_preprocessing_config(
     mixup=False,
 )
 
-misc_dict = {
-    "Rescaling": "1/255",
-    "Normalization": "None"
-}
+misc_dict = {"Rescaling": "1/255", "Normalization": "None"}
 
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%Hh%Mm")
 
-config_dict = get_config_dict(
-    train_prep_cfg, val_prep_cfg, train_cfg, misc=misc_dict)
+config_dict = get_config_dict(train_prep_cfg, val_prep_cfg, train_cfg, misc=misc_dict)
 
 # logging.info(config_dict)
 
-wandb.init(entity="compyle", project="keras-regnet-training",
-           job_type="train",  name="regnetx002" + "_" + date_time,
-           config=config_dict)
+wandb.init(
+    entity="compyle",
+    project="keras-regnet-training",
+    job_type="train",
+    name="regnetx002" + "_" + date_time,
+    config=config_dict,
+)
 train_cfg = wandb.config.train_cfg
-
 
 
 train_cfg = from_dict(data_class=TrainConfig, data=train_cfg)

@@ -1,29 +1,30 @@
 """Script for evaluating RegNets. Supports TPU evaluation."""
 
-import tensorflow as tf
 import argparse
-import os
 import json
-import wandb
 import logging
-
+import os
 from datetime import datetime
-from wandb.keras import WandbCallback
+
+import tensorflow as tf
+import wandb
+from dacite import from_dict
 from dataset import ImageNet
 from utils import *
-from dacite import from_dict
+from wandb.keras import WandbCallback
 
 NORMALIZED = False
 tf.keras.backend.clear_session()
 
 log_location = "gs://ak-us-train"
-train_tfrecs_filepath = tf.io.gfile.glob(
-    "gs://ak-imagenet-new/train/train_*.tfrecord")
-val_tfrecs_filepath = tf.io.gfile.glob(
-    "gs://ak-imagenet-new/valid/valid_*.tfrecord")
+train_tfrecs_filepath = tf.io.gfile.glob("gs://ak-imagenet-new/train/train_*.tfrecord")
+val_tfrecs_filepath = tf.io.gfile.glob("gs://ak-imagenet-new/valid/valid_*.tfrecord")
 
-logging.basicConfig(format="%(asctime)s %(levelname)s : %(message)s",
-                    datefmt="%d-%b-%y %H:%M:%S", level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s : %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+    level=logging.INFO,
+)
 
 cluster_resolver, strategy = connect_to_tpu()
 
@@ -66,16 +67,12 @@ val_prep_cfg = get_preprocessing_config(
     mixup=False,
 )
 
-misc_dict = {
-    "Rescaling": "1/255",
-    "Normalization": "None"
-}
+misc_dict = {"Rescaling": "1/255", "Normalization": "None"}
 
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%Hh%Mm%Ss")
 
-config_dict = get_config_dict(
-    train_prep_cfg, val_prep_cfg, train_cfg, misc=misc_dict)
+config_dict = get_config_dict(train_prep_cfg, val_prep_cfg, train_cfg, misc=misc_dict)
 
 logging.info(config_dict)
 
@@ -87,26 +84,31 @@ logging.info(config_dict)
 logging.info(f"Training options detected: {train_cfg}")
 logging.info("Preprocessing options detected.")
 logging.info(
-    f"Training on TFRecords: {train_prep_cfg.tfrecs_filepath[0]} to {train_prep_cfg.tfrecs_filepath[-1]}")
+    f"Training on TFRecords: {train_prep_cfg.tfrecs_filepath[0]} to {train_prep_cfg.tfrecs_filepath[-1]}"
+)
 logging.info(
-    f"Validating on TFRecords: {val_prep_cfg.tfrecs_filepath[0]} to {val_prep_cfg.tfrecs_filepath[-1]}")
+    f"Validating on TFRecords: {val_prep_cfg.tfrecs_filepath[0]} to {val_prep_cfg.tfrecs_filepath[-1]}"
+)
 
 with strategy.scope():
     optim = get_optimizer(train_cfg)
     model = tf.keras.applications.RegNetY004()
-    
+
     model.compile(
         loss=tf.keras.losses.CategoricalCrossentropy(
-            from_logits=True, label_smoothing=train_cfg.label_smoothing),
+            from_logits=True, label_smoothing=train_cfg.label_smoothing
+        ),
         optimizer=optim,
         metrics=[
             tf.keras.metrics.CategoricalAccuracy(name="accuracy"),
             tf.keras.metrics.TopKCategoricalAccuracy(5, name="top-5-accuracy"),
         ],
     )
-    for i in range(90,100):
-        print("Epoch "+str(i), "#" * 25)
-        model.load_weights("gs://ak-us-train/models/12_10_2021_09h36m01s/all_model_epoch_"+str(i))
+    for i in range(90, 100):
+        print("Epoch " + str(i), "#" * 25)
+        model.load_weights(
+            "gs://ak-us-train/models/12_10_2021_09h36m01s/all_model_epoch_" + str(i)
+        )
         logging.info("Model loaded")
 
         val_ds = ImageNet(val_prep_cfg).make_dataset()
@@ -121,9 +123,9 @@ with strategy.scope():
             avg_acc += metrics[1]
             avg_top5 += metrics[2]
 
-        print("Avg loss: ", avg_loss/10.)
-        print("Avg acc: ", avg_acc/10.)
-        print("Avg top5: ", avg_top5/10.)
+        print("Avg loss: ", avg_loss / 10.0)
+        print("Avg acc: ", avg_acc / 10.0)
+        print("Avg top5: ", avg_top5 / 10.0)
 # train_ds = ImageNet(train_prep_cfg).make_dataset()
 
 # val_ds = val_ds.shuffle(49)
@@ -147,7 +149,6 @@ with strategy.scope():
 # #     validation_steps = 49,
 # #     initial_epoch=91
 # )
-
 
 
 # metrics2 = model.evaluate(val_ds, verbose=1)

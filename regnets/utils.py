@@ -1,16 +1,15 @@
 """Contains utility functions for training."""
 
-from typing import List, Type, Union, Callable
-from dataclasses import dataclass, asdict
-import yaml
-import tensorflow as tf
-import tensorflow_addons as tfa
+import logging
 import math
 import os
-import logging
+from dataclasses import asdict, dataclass
+from typing import Callable, List, Type, Union
+
+import tensorflow as tf
+import tensorflow_addons as tfa
+import yaml
 from wandb.keras import WandbCallback
-from dataclasses import dataclass
-from typing import List, Type, Union, Callable
 
 PI = math.pi
 
