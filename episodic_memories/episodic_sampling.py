@@ -1,17 +1,17 @@
-import torch
-from torch import nn
-from torch.utils.data import Dataset, DataLoader
-import os
-import numpy as np
 import json
-import tqdm
-from datetime import datetime
-from sklearn.model_selection import train_test_split
+import os
 import random
-import wandb
 from copy import deepcopy
+from datetime import datetime
 
+import numpy as np
+import torch
+import tqdm
+import wandb
 from ml_collections import ConfigDict
+from sklearn.model_selection import train_test_split
+from torch import nn
+from torch.utils.data import DataLoader, Dataset
 
 
 def set_seed(seed):
